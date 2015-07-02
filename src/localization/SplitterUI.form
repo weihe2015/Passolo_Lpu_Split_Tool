@@ -50,7 +50,7 @@
                       </Group>
                   </Group>
               </Group>
-              <EmptySpace pref="37" max="32767" attributes="0"/>
+              <EmptySpace pref="53" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -82,7 +82,7 @@
   <SubComponents>
     <Component class="javax.swing.JLabel" name="Select">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Please select the lpu file for splitting:"/>
+        <Property name="text" type="java.lang.String" value="Please select the lpu file or a zip file containing lpu files for splitting:"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="filepath">
@@ -105,7 +105,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="Note">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Note: This tool may fail due to the license issue of Passolo. When it fails, check with Passolo license and run the tool again."/>
+        <Property name="text" type="java.lang.String" value="Note: This tool only accepts lpu file and it will create subfolder for each lpu if user uploads a zip file."/>
       </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="openFolder">
@@ -126,7 +126,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="version">
       <Properties>
-        <Property name="text" type="java.lang.String" value="version 1.0"/>
+        <Property name="text" type="java.lang.String" value="version 1.1"/>
       </Properties>
     </Component>
   </SubComponents>

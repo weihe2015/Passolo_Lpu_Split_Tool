@@ -48,7 +48,7 @@ public class SplitterUI extends javax.swing.JFrame {
         setTitle("ESRI LPU Split Tool");
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
-        Select.setText("Please select the lpu file for splitting:");
+        Select.setText("Please select the lpu file or a zip file containing lpu files for splitting:");
 
         browse.setText("Browse");
         browse.addActionListener(new java.awt.event.ActionListener() {
@@ -64,7 +64,7 @@ public class SplitterUI extends javax.swing.JFrame {
             }
         });
 
-        Note.setText("Note: This tool may fail due to the license issue of Passolo. When it fails, check with Passolo license and run the tool again.");
+        Note.setText("Note: This tool only accepts lpu file and it will create subfolder for each lpu if user uploads a zip file.");
 
         openFolder.setText("Open Folder");
         openFolder.addActionListener(new java.awt.event.ActionListener() {
@@ -80,7 +80,7 @@ public class SplitterUI extends javax.swing.JFrame {
             }
         });
 
-        version.setText("version 1.0");
+        version.setText("version 1.1");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -104,7 +104,7 @@ public class SplitterUI extends javax.swing.JFrame {
                                 .addComponent(filepath, javax.swing.GroupLayout.PREFERRED_SIZE, 448, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGap(42, 42, 42)
                             .addComponent(browse, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(37, Short.MAX_VALUE))
+                .addContainerGap(53, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -196,7 +196,7 @@ public class SplitterUI extends javax.swing.JFrame {
         // TODO add your handling code here:
         String folderpath = filepath.getText();
         split sp = new split();
-        if(folderpath.length() > 0 && folderpath.contains(".lpu")){
+        if(folderpath.length() > 0 && (folderpath.endsWith(".zip") || folderpath.endsWith(".lpu"))){
                 sp.splitFile(folderpath);
                 JOptionPane.showMessageDialog(this,"Task is done");
         }
