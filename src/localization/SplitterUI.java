@@ -12,7 +12,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-
+import org.apache.commons.io.FileUtils;
 /**
  *
  * @author wei7771
@@ -49,6 +49,12 @@ public class SplitterUI extends javax.swing.JFrame {
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
         Select.setText("Please select the lpu file or a zip file containing lpu files for splitting:");
+
+        filepath.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                filepathActionPerformed(evt);
+            }
+        });
 
         browse.setText("Browse");
         browse.addActionListener(new java.awt.event.ActionListener() {
@@ -133,6 +139,8 @@ public class SplitterUI extends javax.swing.JFrame {
     private void browseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseActionPerformed
         // TODO add your handling code here:
         JFileChooser chooser = new JFileChooser();
+        File currDir = new File("C:\\");
+        chooser.setCurrentDirectory(currDir);
         chooser.showOpenDialog(null);
         File f = chooser.getSelectedFile();
         String filename = f.getAbsolutePath();
@@ -197,16 +205,33 @@ public class SplitterUI extends javax.swing.JFrame {
         String folderpath = filepath.getText();
         split sp = new split();
         if(folderpath.length() > 0 && (folderpath.endsWith(".zip") || folderpath.endsWith(".lpu"))){
+                File src = new File("\\\\esri.com\\dev\\data\\i18n\\i18nTeamData\\Utilities\\L10NTools\\Passolo\\Macro\\PslLpuSplitter.bas");
+                File dir = new File("C:\\Users\\Public\\Documents\\Passolo 2015\\Macros\\PslLpuSplitter.bas");
+            try {
+                if(!src.exists()){
+                     JOptionPane.showMessageDialog(this,"The source macro is not existed in the folder.");
+                     System.exit(0);
+                }
+                else if(!dir.exists()){
+                     FileUtils.copyFile(src, dir);
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(SplitterUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
                 sp.splitFile(folderpath);
                 JOptionPane.showMessageDialog(this,"Task is done");
         }
         else{
-            JOptionPane.showMessageDialog(this,"Something wrong here");
+            JOptionPane.showMessageDialog(this,"The file uploaded is not in correct format.");
             System.exit(0);
         }
          
         
     }//GEN-LAST:event_runActionPerformed
+
+    private void filepathActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filepathActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_filepathActionPerformed
 
     /**
      * @param args the command line arguments
@@ -237,6 +262,7 @@ public class SplitterUI extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
             public void run() {
                 new SplitterUI().setVisible(true);
             }

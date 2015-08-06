@@ -103,10 +103,10 @@ public class split {
 		String os = System.getProperty("os.arch");
 		String passoloPath = "";
 		if(os.contains("x86")){
-			passoloPath = "\"C:\\Program Files\\SDL Passolo 2011\\pslcmd.exe\"";
+			passoloPath = "\"C:\\Program Files\\SDL\\SDL Passolo\\SDL Passolo 2015\\pslcmd.exe\"";
 		}
 		else{
-			passoloPath = "\"C:\\Program Files (x86)\\SDL Passolo 2011\\pslcmd.exe\"";
+			passoloPath = "\"C:\\Program Files (x86)\\SDL\\SDL Passolo\\SDL Passolo 2015\\pslcmd.exe\"";
 		}	
 	 	String logfile = folder + "\\" + path.substring(path.lastIndexOf("\\")+1,path.lastIndexOf(".")) + ".log";
 	 	try{
@@ -154,4 +154,5 @@ public class split {
 
 		}
     }
+
 }
