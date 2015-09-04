@@ -6,8 +6,17 @@
 package localization;
 
 import java.awt.Desktop;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -18,7 +27,9 @@ import org.apache.commons.io.FileUtils;
  * @author wei7771
  */
 public class SplitterUI extends javax.swing.JFrame {
-
+    public static String MacroFolder = "";
+    public static String Passolo = "";
+    public static final String userDir = System.getProperty("user.dir");
     /**
      * Creates new form SplitterUI
      */
@@ -36,23 +47,31 @@ public class SplitterUI extends javax.swing.JFrame {
     private void initComponents() {
 
         Select = new javax.swing.JLabel();
-        filepath = new javax.swing.JTextField();
-        browse = new javax.swing.JButton();
-        run = new javax.swing.JButton();
-        Note = new javax.swing.JLabel();
-        openFolder = new javax.swing.JButton();
-        log = new javax.swing.JButton();
         version = new javax.swing.JLabel();
+        Note = new javax.swing.JLabel();
+        run = new javax.swing.JButton();
+        browse = new javax.swing.JButton();
+        log = new javax.swing.JButton();
+        openFolder = new javax.swing.JButton();
+        ToolLabel = new javax.swing.JLabel();
+        CheckBox1 = new javax.swing.JCheckBox();
+        filepath = new javax.swing.JTextField();
+        Note1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("ESRI LPU Split Tool");
-        setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        setTitle("Esri_Lpu_Split_Tool");
 
-        Select.setText("Please select the lpu file or a zip file containing lpu files for splitting:");
+        Select.setText("Please select the folder containing lpu file, a lpu file or a zip file containing lpu files for splitting:");
 
-        filepath.addActionListener(new java.awt.event.ActionListener() {
+        version.setText("version 1.3");
+
+        Note.setText("Note: This tool will create four folders for each vendor and a log file for each lpu file.");
+
+        run.setText("Run");
+        run.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        run.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                filepathActionPerformed(evt);
+                runActionPerformed(evt);
             }
         });
 
@@ -63,14 +82,12 @@ public class SplitterUI extends javax.swing.JFrame {
             }
         });
 
-        run.setText("Run");
-        run.addActionListener(new java.awt.event.ActionListener() {
+        log.setText("Check Log File");
+        log.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                runActionPerformed(evt);
+                logActionPerformed(evt);
             }
         });
-
-        Note.setText("Note: This tool only accepts lpu file and it will create subfolder for each lpu if user uploads a zip file.");
 
         openFolder.setText("Open Folder");
         openFolder.addActionListener(new java.awt.event.ActionListener() {
@@ -79,104 +96,193 @@ public class SplitterUI extends javax.swing.JFrame {
             }
         });
 
-        log.setText("Check Log File");
-        log.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                logActionPerformed(evt);
-            }
-        });
+        ToolLabel.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
+        ToolLabel.setForeground(new java.awt.Color(51, 51, 255));
+        ToolLabel.setText("This is the Passolo lpu split tool");
 
-        version.setText("version 1.1");
+        CheckBox1.setText("My Esri Project");
+
+        Note1.setText("It will delete the lpu file if there all source strings are fully translated or there is no translated language after splitting.");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(23, 23, 23)
+                .addComponent(ToolLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 362, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(version)
+                .addGap(41, 41, 41))
             .addGroup(layout.createSequentialGroup()
-                .addGap(49, 49, 49)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(Note)
-                    .addComponent(Select)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(version)
-                        .addGroup(layout.createSequentialGroup()
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addGroup(layout.createSequentialGroup()
-                                    .addComponent(run, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGap(71, 71, 71)
-                                    .addComponent(openFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGap(67, 67, 67)
-                                    .addComponent(log, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addComponent(filepath, javax.swing.GroupLayout.PREFERRED_SIZE, 448, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGap(42, 42, 42)
-                            .addComponent(browse, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(53, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(49, 49, 49)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(Note)
+                            .addComponent(Select, javax.swing.GroupLayout.PREFERRED_SIZE, 470, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(run, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(72, 72, 72)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(CheckBox1)
+                                                .addGap(0, 0, Short.MAX_VALUE))
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(openFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 66, Short.MAX_VALUE)
+                                                .addComponent(log, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                    .addComponent(filepath, javax.swing.GroupLayout.PREFERRED_SIZE, 470, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(18, 18, 18)
+                                .addComponent(browse, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(80, 80, 80)
+                        .addComponent(Note1)))
+                .addContainerGap(142, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(version)
-                .addGap(3, 3, 3)
+                .addGap(15, 15, 15)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(version)
+                    .addComponent(ToolLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(Select, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(filepath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(browse))
-                .addGap(37, 37, 37)
+                    .addComponent(browse)
+                    .addComponent(filepath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 23, Short.MAX_VALUE)
+                .addComponent(CheckBox1)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(run)
                     .addComponent(openFolder)
                     .addComponent(log))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 55, Short.MAX_VALUE)
-                .addComponent(Note)
-                .addGap(57, 57, 57))
+                .addGap(28, 28, 28)
+                .addComponent(Note, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(Note1, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(20, 20, 20))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void runActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runActionPerformed
+        String path = filepath.getText();
+        File fPath = new File(path);
+        String folderpath = "";
+        ArrayList<String> paths = new ArrayList<String>();
+        if((path != "" && !path.endsWith(".zip") && !path.endsWith(".lpu")) || (fPath.isDirectory() && path != "")){
+            File dir = new File(path);
+            File[] dirs = dir.listFiles();
+            if(dirs != null){
+                for(File child: dirs){
+                    String childpath = child.getAbsolutePath();
+                    if(childpath.endsWith(".zip") || childpath.endsWith(".lpu")){
+                            paths.add(childpath);
+                    }
+                }
+                if(paths.size() == 0){
+                    JOptionPane.showMessageDialog(this, "The file path you select does not contain any lpu file.", "File path Issue Error", JOptionPane.ERROR_MESSAGE,null );
+                    return; 
+                }
+            }
+        }else if(path.endsWith(".zip") || path.endsWith(".lpu")){
+            paths.add(path);
+        }
+        else{
+            JOptionPane.showMessageDialog(this, "The file path you select is neither folder containing lpu file, nor lpu or zip file.", "File path Issue Error", JOptionPane.ERROR_MESSAGE,null );
+            return; 
+        }
+        try {
+            writeProperties();
+            // TODO add your handling code here:
+            if(checkLicense() == true){
+                JOptionPane.showMessageDialog(this, "There is a passolo license issue. Please solve it before running this tool", "Passolo license Issue Error", JOptionPane.ERROR_MESSAGE,null );
+                return;
+            }else{
+                split sp = new split();
+                File dir = new File(MacroFolder + "\\PslLpuSplitter_v3.bas");
+                try{
+                    if( CheckBox1.isSelected() == true){
+                        createMacroMyEsri();
+                    }else{
+                        createMacro(); 
+                    }
+                    System.out.println(Passolo);
+                    System.out.println(MacroFolder);
+                    if(!dir.exists()){
+                        JOptionPane.showMessageDialog(this,"Missing macro. It should not happen","Macro Issue", JOptionPane.ERROR_MESSAGE,null);
+                        return;
+                    }
+                    boolean successful = false;
+                    for(int i=0; i < paths.size(); i++){
+                        folderpath = paths.get(i);
+                        successful = sp.splitFile(folderpath,Passolo,CheckBox1.isSelected());
+                    }
+                    
+                    try{
+                        dir.delete();     
+                    }catch(Exception e){
+
+                    }
+                    if(successful == true){
+                        JOptionPane.showMessageDialog(this,"Task is done, please click \"Open Folder\" to view the report");
+                        return;
+                    }
+                    else{
+                        JOptionPane.showMessageDialog(this,"Passolo is not able to process the lpu file","Passolo Issue", JOptionPane.ERROR_MESSAGE,null);
+                        return;
+                    }
+                }catch(IOException ex){
+                     Logger.getLogger(SplitterUI.class.getName()).log(Level.SEVERE, null, ex);
+                }         
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(SplitterUI.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(SplitterUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }//GEN-LAST:event_runActionPerformed
+      
+    public boolean checkLicense() throws IOException, InterruptedException{
+        boolean psllicense = false;
+        String pslcmd = Passolo.substring(0, Passolo.lastIndexOf("\\")+1)+"pslcmd.exe\"";
+        String cmd = "cmd.exe /C " + pslcmd + "/output";
+        Runtime rt = Runtime.getRuntime();
+        Process proc = rt.exec(cmd);
+        int exitVal = proc.waitFor();
+        if(exitVal == 99 || exitVal == 98){
+            psllicense = true;
+        }
+        return psllicense;
+    }
+    
     private void browseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseActionPerformed
         // TODO add your handling code here:
         JFileChooser chooser = new JFileChooser();
-        File currDir = new File("C:\\");
-        chooser.setCurrentDirectory(currDir);
         chooser.showOpenDialog(null);
         File f = chooser.getSelectedFile();
         String filename = f.getAbsolutePath();
-        filepath.setText(filename);
-    }//GEN-LAST:event_browseActionPerformed
-
-    private void openFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openFolderActionPerformed
-        // TODO add your handling code here:
-        String folderpath = filepath.getText();
-        if(folderpath.length() > 0){
-            File folder = new File(folderpath.substring(0,folderpath.lastIndexOf("\\")));
-            if(Desktop.isDesktopSupported()){
-                try {
-                    Desktop.getDesktop().open(folder);
-                } catch (IOException ex) {
-                    Logger.getLogger(SplitterUI.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
+        if(filename.endsWith(".lpu") || filename.endsWith(".zip")){
+            filepath.setText(filename);
         }
         else{
-            String home = System.getProperty("user.home") + "\\Desktop";
-            File folder = new File(home);
-             if(Desktop.isDesktopSupported()){
-                try {
-                    Desktop.getDesktop().open(folder);
-                } catch (IOException ex) {
-                    Logger.getLogger(SplitterUI.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
+            JOptionPane.showMessageDialog(this,"The file type you select is not correct. ","Upload File Issue", JOptionPane.ERROR_MESSAGE,null);
+            return;
         }
-    }//GEN-LAST:event_openFolderActionPerformed
+    }//GEN-LAST:event_browseActionPerformed
 
     private void logActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logActionPerformed
         // TODO add your handling code here:
         String folderpath = filepath.getText();
-        if(folderpath.length() > 0){
+        if(folderpath.length() > 0 && (folderpath.endsWith(".lpu") || folderpath.endsWith(".zip")) ){
             String logfile = folderpath.substring(0,folderpath.lastIndexOf("."))+".log";
             File folder = new File(logfile);
             if(Desktop.isDesktopSupported()){
@@ -187,10 +293,14 @@ public class SplitterUI extends javax.swing.JFrame {
                 }
             }
         }
-         else{
+        else if(folderpath.length() > 0 ){
+             JOptionPane.showMessageDialog(this,"Since you have input a folder path, you need to open it manually.","Open Log File Warning", JOptionPane.WARNING_MESSAGE,null);
+             return;
+        }
+        else{
             String home = System.getProperty("user.home") + "\\Desktop";
             File folder = new File(home);
-             if(Desktop.isDesktopSupported()){
+            if(Desktop.isDesktopSupported()){
                 try {
                     Desktop.getDesktop().open(folder);
                 } catch (IOException ex) {
@@ -200,39 +310,1207 @@ public class SplitterUI extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_logActionPerformed
 
-    private void runActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runActionPerformed
+    private void openFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openFolderActionPerformed
         // TODO add your handling code here:
         String folderpath = filepath.getText();
-        split sp = new split();
-        if(folderpath.length() > 0 && (folderpath.endsWith(".zip") || folderpath.endsWith(".lpu"))){
-                File src = new File("\\\\esri.com\\dev\\data\\i18n\\i18nTeamData\\Utilities\\L10NTools\\Passolo\\Macro\\PslLpuSplitter.bas");
-                File dir = new File("C:\\Users\\Public\\Documents\\Passolo 2015\\Macros\\PslLpuSplitter.bas");
-            try {
-                if(!src.exists()){
-                     JOptionPane.showMessageDialog(this,"The source macro is not existed in the folder.");
-                     System.exit(0);
-                }
-                else if(!dir.exists()){
-                     FileUtils.copyFile(src, dir);
-                }
-            } catch (IOException ex) {
-                Logger.getLogger(SplitterUI.class.getName()).log(Level.SEVERE, null, ex);
+        File fPath = new File(folderpath);
+        if(folderpath.length() > 0){
+            File folder = null;
+            if(folderpath.endsWith(".lpu") && !fPath.isDirectory()){
+                folder = new File(folderpath.substring(0,folderpath.lastIndexOf("\\")));
             }
-                sp.splitFile(folderpath);
-                JOptionPane.showMessageDialog(this,"Task is done");
+            else if(folderpath.endsWith(".zip") && !fPath.isDirectory()){
+                File zFile = new File(folderpath.substring(0, folderpath.lastIndexOf(".")));
+                if(!zFile.exists()){
+                    JOptionPane.showMessageDialog(this,"Cannot find the unzip folder, please run it with zip file first.","Folder Issue", JOptionPane.WARNING_MESSAGE,null);
+                    return;
+                }
+                folder = new File(folderpath.substring(0, folderpath.lastIndexOf(".")));
+            }
+            else if(fPath.isDirectory()){
+                folder = fPath;
+            }
+                if(Desktop.isDesktopSupported()){
+                    try {
+                        Desktop.getDesktop().open(folder);
+                    } catch (IOException ex) {
+                        Logger.getLogger(SplitterUI.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+            else{
+                String home = System.getProperty("user.home") + "\\Desktop";
+                File folder = new File(home);
+                if(Desktop.isDesktopSupported()){
+                    try {
+                        Desktop.getDesktop().open(folder);
+                    } catch (IOException ex) {
+                        Logger.getLogger(SplitterUI.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+    }//GEN-LAST:event_openFolderActionPerformed
+    
+    public void writeProperties(){
+        try{
+            String os = System.getProperty("os.arch");
+            String psl2011 = "";
+            String psl2015 = "";
+            if(os.contains("64")){
+                psl2011 = "C:\\Program Files (x86)\\SDL Passolo 2011\\psl.exe";
+                psl2015 = "C:\\Program Files (x86)\\SDL\\SDL Passolo\\SDL Passolo 2015\\psl.exe";
+            }
+            else if(os.contains("x86")){
+               psl2011 = "C:\\Program Files\\SDL Passolo 2011\\psl.exe";
+               psl2015 = "C:\\Program Files\\SDL\\SDL Passolo\\SDL Passolo 2015\\psl.exe";
+            }
+            File psl2011MacroFolder = new File("C:\\Users\\Public\\Documents\\Passolo 2011\\Macros");
+            File psl2015MacroFolder = new File("C:\\Users\\Public\\Documents\\Passolo 2015\\Macros");
+            
+           /* if(!psl2011MacroFolder.exists() || !psl2015MacroFolder.exists()){
+                JOptionPane.showMessageDialog(this,"Cannot access passolo macro folder.","Passolo Issue", JOptionPane.ERROR_MESSAGE,null);
+                return;
+            } */
+            if(psl2011MacroFolder.exists()){
+                MacroFolder = psl2011MacroFolder.getAbsolutePath();
+                Passolo = "\"" + psl2011 + "\"";
+            }
+            else if(psl2015MacroFolder.exists()){
+                MacroFolder = psl2015MacroFolder.getAbsolutePath();
+                Passolo ="\"" + psl2015 + "\"";
+            }
+            else{
+                MacroFolder = psl2011MacroFolder.getAbsolutePath();
+                Passolo = "\"" + psl2011 + "\"";
+            }
+
+        }catch(Exception e){
+            
         }
-        else{
-            JOptionPane.showMessageDialog(this,"The file uploaded is not in correct format.");
-            System.exit(0);
-        }
-         
+    }
+    
+    public static void createMacroMyEsri() throws IOException{
+        String content = "Option Explicit"
+                +"\r\n"+"Sub Main"
+                +"\r\n"+"Dim prj As PslProject"
+                +"\r\n"+"Set prj = PSL.ActiveProject"
+                +"\r\n"+"'Check whether we have open a project or not"
+                +"\r\n"+"If prj Is Nothing Then"
+                +"\r\n"+"MsgBox(\"No active Passolo project.\")"
+                +"\r\n"+"Exit Sub"
+                +"\r\n"+"End If"
+                +"\r\n"+"Const ForWriting = 2"
+                +"\r\n"+"Dim logFile As String"
+                +"\r\n"+"logFile = Mid(prj.Location,1,InStrRev(prj.Location,\"\\\")) & prj.Name & \".log\""
+                +"\r\n"+"Dim objFSO, objFile, objFile2"
+                +"\r\n"+"Set objFSO = CreateObject(\"Scripting.FileSystemObject\")"
+                +"\r\n"+"If Dir(logFile) <> \"\" Then"
+                +"\r\n"+"Set objFile2 = objFSO.OpenTextFile(logFile,ForWriting)"
+                +"\r\n"+"Else"
+                +"\r\n"+"Set objFile = objFSO.CreateTextFile(logFile,True)"
+                +"\r\n"+"objFile.Close"
+                +"\r\n"+"Set objFile2 = objFSO.OpenTextFile(logFile,ForWriting)"
+                +"\r\n"+"End If"
+                +"\r\n"+"Dim prjName As String"
+                +"\r\n"+"prjName = prj.Name"
+                +"\r\n"+"If (InStr(prj.Name,\"ECI\") > 0) Then"
+                +"\r\n"+"ECI(prj,objFile2)"
+                +"\r\n"+"ElseIf (InStr(prj.Name,\"AAC\") > 0) Then"
+                +"\r\n"+"AAC(prj,objFile2)"
+                +"\r\n"+"ElseIf (InStr(prj.Name,\"TOIN\") > 0) Then"
+                +"\r\n"+"TOIN(prj,objFile2)"
+                +"\r\n"+"ElseIf (InStr(prj.Name,\"LIOX\") > 0) Then"
+                +"\r\n"+"LIOX(prj,objFile2)"
+                +"\r\n"+"End If"
+                +"\r\n"+"objFile2.Close"
+                +"\r\n"+"End Sub"
+                +"\r\n"+"Function ECI(prj,objFile2)"
+                +"\r\n"+"Dim Lang As String"
+                +"\r\n"+"Dim trn As PslTransList"
+                +"\r\n"+"Dim i,j,h As Integer"
+                +"\r\n"+"Dim LangNum As Integer"
+                +"\r\n"+"Dim logoutput As String"
+                +"\r\n"+"logoutput = \"Begin to process file \" & prj.Name"
+                +"\r\n"+"objFile2.writeLine(logoutput)"
+                +"\r\n"+"'Remove the language sets"
+                +"\r\n"+"'The pointer of each string list of each language"
+                +"\r\n"+"'It goes thought only one string list"
+                +"\r\n"+"i = 0"
+                +"\r\n"+"'The pointer of language"
+                +"\r\n"+"j = 1"
+                +"\r\n"+"h = 0"
+                +"\r\n"+"LangNum = prj.Languages.Count"
+                +"\r\n"+"For Each trn In prj.TransLists"
+                +"\r\n"+"i = i + 1"
+                +"\r\n"+"If ( i > LangNum) Then"
+                +"\r\n"+"Exit For"
+                +"\r\n"+"End If"
+                +"\r\n"+"Lang = trn.Language.LangCode"
+                +"\r\n"+"If ((StrComp(Lang,\"chs\") = 0) Or (StrComp(Lang,\"vit\") = 0) Or (StrComp(Lang, \"cht\") = 0) Or StrComp(Lang,\"tha\") = 0  ) Then"
+                +"\r\n"+"j = j + 1"
+                +"\r\n"+"h = h + 1"
+                +"\r\n"+"Else"
+                +"\r\n"+"logoutput = \"Removing language \" & Lang"
+                +"\r\n"+"objFile2.writeLine(logoutput)"
+                +"\r\n"+"prj.Languages.Remove(j)"
+                +"\r\n"+"End If"
+                +"\r\n"+"Next trn"
+                +"\r\n"+"'Delete those source lists that are all translated and validated"
+                +"\r\n"+"Dim delete As Boolean"
+                +"\r\n"+"delete = True"
+                +"\r\n"+"'The pointer of each string list of each language"
+                +"\r\n"+"j = 0"
+                +"\r\n"+"'The pointer of each string list"
+                +"\r\n"+"i = 1"
+                +"\r\n"+"For Each trn In prj.TransLists"
+                +"\r\n"+"j = j + 1"
+                +"\r\n"+"If(j > h) Then"
+                +"\r\n"+"j = 1"
+                +"\r\n"+"i = i + 1"
+                +"\r\n"+"End If"
+                +"\r\n"+"Dim k As Integer"
+                +"\r\n"+"If (trn.TransRate <> 100) Then"
+                +"\r\n"+"delete = False"
+                +"\r\n"+"For k = 1 To trn.StringCount"
+                +"\r\n"+"On Error Resume Next" 
+                +"\r\n"+"Dim tString As PslTransString"
+                +"\r\n"+"Set tString = trn.String(k)"
+                +"\r\n"+"If StrComp(tString.SourceText,tString.Text) <> 0 And tString.State(pslStateTranslated) = False And tString.State(pslStateReadOnly) = False Then"
+                +"\r\n"+"logoutput = \"Find one source and translation are not identical in untranslated state. Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
+                +"\r\n"+"objFile2.writeLine(logoutput)"
+                +"\r\n"+"PSL.Output(logoutput)"
+                +"\r\n"+"tString.Text = tString.SourceText"
+                +"\r\n"+"End If"
+                +"\r\n"+"If tString.State(pslStateTranslated) = True And tString.State(pslStateReadOnly) = False And tString.State(pslStateReview) = True And tString.State(pslStateAutoTranslated) = True Then"
++"\r\n"+"If tString.State(pslStateLocked) = True Then" 
++"\r\n"+"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"Else"
++"\r\n"+"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"End If"
+                +"\r\n"+"End If" 
+                +"\r\n"+"Next k"                
+                +"\r\n"+"trn.Save"
+                +"\r\n"+"Else"
+                +"\r\n"+"For k = 1 To trn.StringCount"
+                +"\r\n"+"On Error Resume Next" 
+                +"\r\n"+"Dim tString1 As PslTransString"
+                +"\r\n"+"Set tString1 = trn.String(k)"
+                +"\r\n"+"If tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = False Then"
+                +"\r\n"+"delete = False"
+                +"\r\n"+"ElseIf tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = True Then"
++"\r\n"+"If tString1.State(pslStateLocked) = True Then" 
++"\r\n"+"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"Else"
++"\r\n"+"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"End If"
+                +"\r\n"+"End If"
+                +"\r\n"+"Next k"
+                +"\r\n"+"End If"
+                +"\r\n"+"If (delete = True) And (j = h) Then"
+                +"\r\n"+"prj.SourceLists.Remove(i)"
+                +"\r\n"+"i = i - 1"
+                +"\r\n"+"ElseIf (j = h) Then"
+                +"\r\n"+"delete = True"
+                +"\r\n"+"End If"
+                +"\r\n"+"Next trn"
+                +"\r\n"+"If prj.Languages.Count = 0 Or prj.SourceLists.Count = 0 Then"
+                +"\r\n"+"Dim deleteFile As String"
+                +"\r\n"+"deleteFile = prj.Location & \"\\\" + prj.Name & \".lpu\""
+                +"\r\n"+"prj.Close()"
+                +"\r\n"+"Dim FileSys"
+                +"\r\n"+"Set FileSys = CreateObject(\"Scripting.FileSystemObject\")"
+                +"\r\n"+"FileSys.DeleteFile(deleteFile)"
+                +"\r\n"+"End If"
+                +"\r\n"+"End Function"
+                +"\r\n"+"Function AAC(prj,objFile2)"
+                +"\r\n"+"Dim Lang As String"
+                +"\r\n"+"Dim trn As PslTransList"
+                +"\r\n"+"Dim i,j,h As Integer"
+                +"\r\n"+"Dim LangNum As Integer"
+                +"\r\n"+"Dim logoutput As String"
+                +"\r\n"+"logoutput = \"Begin to process file \" & prj.Name"
+                +"\r\n"+"objFile2.writeLine(logoutput)"
+                +"\r\n"+"'Remove the language sets"
+                +"\r\n"+"'The pointer of each string list of each language"
+                +"\r\n"+"'It goes thought only one string list"
+                +"\r\n"+"i = 0"
+                +"\r\n"+"h = 0"
+                +"\r\n"+"'The pointer of language"
+                +"\r\n"+"j = 1"
+                +"\r\n"+"LangNum = prj.Languages.Count"
+                +"\r\n"+"For Each trn In prj.TransLists"
+                +"\r\n"+"i = i + 1"
+                +"\r\n"+"If ( i > LangNum) Then"
+                +"\r\n"+"Exit For"
+                +"\r\n"+"End If"
+                +"\r\n"+"Lang = trn.Language.LangCode"
+                +"\r\n"+"If ((StrComp(Lang,\"sve\") = 0) Or (StrComp(Lang,\"fin\") = 0) Or (StrComp(Lang, \"dan\") = 0) Or (StrComp(Lang,\"nor\") = 0) Or (StrComp(Lang,\"plk\") = 0) Or (StrComp(Lang,\"nld\") = 0)) Then"
+                +"\r\n"+"j = j + 1"
+                +"\r\n"+"h = h + 1"
+                +"\r\n"+"Else"
+                +"\r\n"+"prj.Languages.Remove(j)"
+                +"\r\n"+"End If"
+                +"\r\n"+"Next trn"
+                +"\r\n"+"'Delete those source lists that are all translated and validated"
+                +"\r\n"+"Dim delete As Boolean"
+                +"\r\n"+"delete = True"
+                +"\r\n"+"'The pointer of each string list of each language"
+                +"\r\n"+"j = 0"
+                +"\r\n"+"'The pointer of each string list"
+                +"\r\n"+"i = 1"
+                +"\r\n"+"For Each trn In prj.TransLists"
+                +"\r\n"+"j = j + 1"
+                +"\r\n"+"If(j > h) Then"
+                +"\r\n"+"j = 1"
+                +"\r\n"+"i = i + 1"
+                +"\r\n"+"End If"
+                +"\r\n"+"Dim k As Integer"
+                +"\r\n"+"If (trn.TransRate <> 100) Then"
+                +"\r\n"+"delete = False"
+                +"\r\n"+"For k = 1 To trn.StringCount"
+                +"\r\n"+"On Error Resume Next" 
+                +"\r\n"+"Dim tString As PslTransString"
+                +"\r\n"+"Set tString = trn.String(k)"
+                +"\r\n"+"If StrComp(tString.SourceText,tString.Text) <> 0 And tString.State(pslStateTranslated) = False And tString.State(pslStateReadOnly) = False Then"
+                +"\r\n"+"logoutput = \"Find one source and translation are not identical in untranslated state. Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
+                +"\r\n"+"objFile2.writeLine(logoutput)"
+                +"\r\n"+"PSL.Output(logoutput)"
+                +"\r\n"+"tString.Text = tString.SourceText"
+                +"\r\n"+"End If"             
+                +"\r\n"+"If tString.State(pslStateTranslated) = True And tString.State(pslStateReadOnly) = False And tString.State(pslStateReview) = True And tString.State(pslStateAutoTranslated) = True Then"
++"\r\n"+"If tString.State(pslStateLocked) = True Then" 
++"\r\n"+"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"Else"
++"\r\n"+"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"End If"
+                +"\r\n"+"End If"
+                +"\r\n"+"End If" 
+                +"\r\n"+"Next k"
+                +"\r\n"+"trn.Save"
+                +"\r\n"+"Else"
+                +"\r\n"+"For k = 1 To trn.StringCount"
+                +"\r\n"+"On Error Resume Next" 
+                +"\r\n"+"Dim tString1 As PslTransString"
+                +"\r\n"+"Set tString1 = trn.String(k)"
+                +"\r\n"+"If tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = False Then"
+                +"\r\n"+"delete = False"
+                +"\r\n"+"ElseIf tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = True Then"
++"\r\n"+"If tString1.State(pslStateLocked) = True Then" 
++"\r\n"+"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"Else"
++"\r\n"+"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"End If"
+                +"\r\n"+"End If"
+                +"\r\n"+"Next k"
+                +"\r\n"+"End If"
+                +"\r\n"+"If (delete = True) And (j = h) Then"
+                +"\r\n"+"prj.SourceLists.Remove(i)"
+                +"\r\n"+"i = i - 1"
+                +"\r\n"+"ElseIf (j = h) Then"
+                +"\r\n"+"delete = True"
+                +"\r\n"+"End If"
+                +"\r\n"+"Next trn"
+                +"\r\n"+"If prj.Languages.Count = 0 Or prj.SourceLists.Count = 0 Then"
+                +"\r\n"+"Dim deleteFile As String"
+                +"\r\n"+"deleteFile = prj.Location & \"\\\" + prj.Name & \".lpu\""
+                +"\r\n"+"prj.Close()"
+                +"\r\n"+"Dim FileSys"
+                +"\r\n"+"Set FileSys = CreateObject(\"Scripting.FileSystemObject\")"
+                +"\r\n"+"FileSys.DeleteFile(deleteFile)"
+                +"\r\n"+"End If"
+                +"\r\n"+"End Function"
+                +"\r\n"+"Function TOIN(prj,objFile2)"
+                +"\r\n"+"Dim Lang As String"
+                +"\r\n"+"Dim trn As PslTransList"
+                +"\r\n"+"Dim i,j,h As Integer"
+                +"\r\n"+"Dim LangNum As Integer"
+                +"\r\n"+"Dim logoutput As String"
+                +"\r\n"+"logoutput = \"Begin to process file \" & prj.Name"
+                +"\r\n"+"objFile2.writeLine(logoutput)"
+                +"\r\n"+"i = 0"
+                +"\r\n"+"j = 1"
+                +"\r\n"+"h = 0"
+                +"\r\n"+"LangNum = prj.Languages.Count"
+                +"\r\n"+"For Each trn In prj.TransLists"
+                +"\r\n"+"i = i + 1"
+                +"\r\n"+"If ( i > LangNum) Then"
+                +"\r\n"+"Exit For"
+                +"\r\n"+"End If"
+                +"\r\n"+"Lang = trn.Language.LangCode"
+                +"\r\n"+"If ((StrComp(Lang,\"jpn\") = 0) Or (StrComp(Lang,\"kor\") = 0)) Then"
+                +"\r\n"+"j = j + 1"
+                +"\r\n"+"Else"
+                +"\r\n"+"prj.Languages.Remove(j)"
+                +"\r\n"+"End If"
+                +"\r\n"+"Next trn"
+                +"\r\n"+"'Delete those source lists that are all translated and validated"
+                +"\r\n"+"Dim delete As Boolean"
+                +"\r\n"+"delete = True"
+                +"\r\n"+"'The pointer of each string list of each language"
+                +"\r\n"+"j = 0"
+                +"\r\n"+"'The pointer of each string list"
+                +"\r\n"+"i = 1"
+                +"\r\n"+"For Each trn In prj.TransLists"
+                +"\r\n"+"j = j + 1"
+                +"\r\n"+"If(j > h) Then"
+                +"\r\n"+"j = 1"
+                +"\r\n"+"i = i + 1"
+                +"\r\n"+"End If"
+                +"\r\n"+"Dim k As Integer"
+                +"\r\n"+"If (trn.TransRate <> 100) Then"
+                +"\r\n"+"delete = False"
+                +"\r\n"+"For k = 1 To trn.StringCount"
+                +"\r\n"+"On Error Resume Next" 
+                +"\r\n"+"Dim tString As PslTransString"
+                +"\r\n"+"Set tString = trn.String(k)"
+                +"\r\n"+"If StrComp(tString.SourceText,tString.Text) <> 0 And tString.State(pslStateTranslated) = False And tString.State(pslStateReadOnly) = False Then"
+                +"\r\n"+"logoutput = \"Find one source and translation are not identical in untranslated state. Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
+                +"\r\n"+"objFile2.writeLine(logoutput)"
+                +"\r\n"+"PSL.Output(logoutput)"
+                +"\r\n"+"tString.Text = tString.SourceText"
+                +"\r\n"+"End If"     
+                +"\r\n"+"If tString.State(pslStateTranslated) = True And tString.State(pslStateReadOnly) = False And tString.State(pslStateReview) = True And tString.State(pslStateAutoTranslated) = True Then"
++"\r\n"+"If tString.State(pslStateLocked) = True Then" 
++"\r\n"+"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"Else"
++"\r\n"+"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"End If"
+                +"\r\n"+"End If"
+                +"\r\n"+"End If" 
+                +"\r\n"+"Next k"
+                +"\r\n"+"trn.Save"
+                +"\r\n"+"Else"
+                +"\r\n"+"For k = 1 To trn.StringCount"
+                +"\r\n"+"On Error Resume Next" 
+                +"\r\n"+"Dim tString1 As PslTransString"
+                +"\r\n"+"Set tString1 = trn.String(k)"
+                +"\r\n"+"If tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = False Then"
+                +"\r\n"+"delete = False"
+                +"\r\n"+"ElseIf tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = True Then"
++"\r\n"+"If tString1.State(pslStateLocked) = True Then" 
++"\r\n"+"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"Else"
++"\r\n"+"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"End If"
+                +"\r\n"+"End If"
+                +"\r\n"+"Next k"
+                +"\r\n"+"End If"
+                +"\r\n"+"If (delete = True) And (j = h) Then"
+                +"\r\n"+"prj.SourceLists.Remove(i)"
+                +"\r\n"+"i = i - 1"
+                +"\r\n"+"ElseIf (j = h) Then"
+                +"\r\n"+"delete = True"
+                +"\r\n"+"End If"
+                +"\r\n"+"Next trn"
+                +"\r\n"+"If prj.Languages.Count = 0 Or prj.SourceLists.Count = 0 Then"
+                +"\r\n"+"Dim deleteFile As String"
+                +"\r\n"+"deleteFile = prj.Location & \"\\\" + prj.Name & \".lpu\""
+                +"\r\n"+"prj.Close()"
+                +"\r\n"+"Dim FileSys"
+                +"\r\n"+"Set FileSys = CreateObject(\"Scripting.FileSystemObject\")"
+                +"\r\n"+"FileSys.DeleteFile(deleteFile)"
+                +"\r\n"+"End If"
+                +"\r\n"+"End Function"
+                +"\r\n"+"Function LIOX(prj,objFile2)"
+                +"\r\n"+"Dim Lang As String"
+                +"\r\n"+"Dim trn As PslTransList"
+                +"\r\n"+"Dim i,j,h As Integer"
+                +"\r\n"+"Dim LangNum As Integer"
+                +"\r\n"+"Dim logoutput As String"
+                +"\r\n"+"logoutput = \"Begin to process file \" & prj.Name"
+                +"\r\n"+"objFile2.writeLine(logoutput)"
+                +"\r\n"+"i = 0"
+                +"\r\n"+"j = 1"
+                +"\r\n"+"h = 0"
+                +"\r\n"+"LangNum = prj.Languages.Count"
+                +"\r\n"+"For Each trn In prj.TransLists"
+                +"\r\n"+"i = i + 1"
+                +"\r\n"+"If ( i > LangNum) Then"
+                +"\r\n"+"Exit For"
+                +"\r\n"+"End If"
+                +"\r\n"+"Lang = trn.Language.LangCode"
+                +"\r\n"+"If ((StrComp(Lang,\"ita\") = 0) Or (StrComp(Lang,\"ptb\") = 0) Or (StrComp(Lang, \"rom\") = 0) Or (StrComp(Lang,\"ara\") = 0) Or (StrComp(Lang,\"csy\") = 0) Or (StrComp(Lang, \"deu\") = 0) Or (StrComp(Lang,\"fra\") = 0) Or (StrComp(Lang,\"heb\") = 0) Or (StrComp(Lang, \"rus\") = 0) Or (StrComp(Lang,\"trk\") = 0) Or (StrComp(Lang,\"ell\") = 0) Or (StrComp(Lang, \"esp\") = 0) Or (StrComp(Lang,\"eti\") = 0) Or (StrComp(Lang,\"lth\") = 0) Or (StrComp(Lang, \"lvi\") = 0) Or (StrComp(Lang, \"ptg\") = 0)) Then"
+                +"\r\n"+"j = j + 1"
+                +"\r\n"+"h = h + 1"
+                +"\r\n"+"Else"
+                +"\r\n"+"prj.Languages.Remove(j)"
+                +"\r\n"+"End If"
+                +"\r\n"+"Next trn"
+                +"\r\n"+"'Delete those source lists that are all translated and validated"
+                +"\r\n"+"Dim delete As Boolean"
+                +"\r\n"+"delete = True"
+                +"\r\n"+"j = 0"
+                +"\r\n"+"i = 1"
+                +"\r\n"+"For Each trn In prj.TransLists"
+                +"\r\n"+"j = j + 1"
+                +"\r\n"+"If(j > h) Then"
+                +"\r\n"+"j = 1"
+                +"\r\n"+"i = i + 1"
+                +"\r\n"+"End If"
+                +"\r\n"+"Dim k As Integer"
+                +"\r\n"+"If (trn.TransRate <> 100) Then"
+                +"\r\n"+"delete = False"
+                +"\r\n"+"For k = 1 To trn.StringCount"
+                +"\r\n"+"On Error Resume Next" 
+                +"\r\n"+"Dim tString As PslTransString"
+                +"\r\n"+"Set tString = trn.String(k)"
+                +"\r\n"+"If StrComp(tString.SourceText,tString.Text) <> 0 And tString.State(pslStateTranslated) = False And tString.State(pslStateReadOnly) = False Then"
+                +"\r\n"+"logoutput = \"Find one source and translation are not identical in untranslated state. Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
+                +"\r\n"+"objFile2.writeLine(logoutput)"
+                +"\r\n"+"PSL.Output(logoutput)"
+                +"\r\n"+"tString.Text = tString.SourceText"
+                +"\r\n"+"End If"      
+                +"\r\n"+"If tString.State(pslStateTranslated) = True And tString.State(pslStateReadOnly) = False And tString.State(pslStateReview) = True And tString.State(pslStateAutoTranslated) = True Then"
++"\r\n"+"If tString.State(pslStateLocked) = True Then" 
++"\r\n"+"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"Else"
++"\r\n"+"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"End If"
+                +"\r\n"+"End If"
+                +"\r\n"+"End If" 
+                +"\r\n"+"Next k"
+                +"\r\n"+"trn.Save"
+                +"\r\n"+"Else"
+                +"\r\n"+"For k = 1 To trn.StringCount"
+                +"\r\n"+"On Error Resume Next" 
+                +"\r\n"+"Dim tString1 As PslTransString"
+                +"\r\n"+"Set tString1 = trn.String(k)"
+                +"\r\n"+"If tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = False Then"
+                +"\r\n"+"delete = False"
+                +"\r\n"+"ElseIf tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = True Then"
++"\r\n"+"If tString1.State(pslStateLocked) = True Then" 
++"\r\n"+"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"Else"
++"\r\n"+"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title"
++"\r\n"+"objFile2.writeLine(logoutput)"
++"\r\n"+"PSL.Output(logoutput)"
++"\r\n"+"End If"
+                +"\r\n"+"End If"
+                +"\r\n"+"Next k"
+                +"\r\n"+"End If"
+                +"\r\n"+"If (delete = True) And (j = h) Then"
+                +"\r\n"+"prj.SourceLists.Remove(i)"
+                +"\r\n"+"i = i - 1"
+                +"\r\n"+"ElseIf (j = h) Then"
+                +"\r\n"+"delete = True"
+                +"\r\n"+"End If"
+                +"\r\n"+"Next trn"
+                +"\r\n"+"If prj.Languages.Count = 0 Or prj.SourceLists.Count = 0 Then"
+                +"\r\n"+"Dim deleteFile As String"
+                +"\r\n"+"deleteFile = prj.Location & \"\\\" + prj.Name & \".lpu\""
+                +"\r\n"+"prj.Close()"
+                +"\r\n"+"Dim FileSys"
+                +"\r\n"+"Set FileSys = CreateObject(\"Scripting.FileSystemObject\")"
+                +"\r\n"+"FileSys.DeleteFile(deleteFile)"
+                +"\r\n"+"End If"
+                +"\r\n"+"End Function" + "\r\n";
+        File file = new File(MacroFolder + "\\PslLpuSplitter_v3.bas");
         
-    }//GEN-LAST:event_runActionPerformed
+	// if file doesnt exists, then create it
+	if (!file.exists()) {
+            file.createNewFile();
+	}
 
-    private void filepathActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filepathActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_filepathActionPerformed
+	FileWriter fw = new FileWriter(file.getAbsoluteFile());
+	BufferedWriter bw = new BufferedWriter(fw);
+	bw.write(content);
+	bw.close();
+    }
+    
+    public static void createMacro() throws IOException{
+        String content = "Option Explicit" + "\r\n"
+            +"Sub Main" + "\r\n"
+            +"Dim prj As PslProject" + "\r\n"
+            +"Set prj = PSL.ActiveProject" + "\r\n"
+            +"'Check whether we have open a project or not" + "\r\n"
+            +"If prj Is Nothing Then" + "\r\n"
+            +"MsgBox(\"No active Passolo project.\")" + "\r\n"
+            +"Exit Sub" + "\r\n"
+            +"End If" + "\r\n"
+            +"Const ForWriting = 2" + "\r\n"
+            +"Dim logFile As String" + "\r\n"
+            +"logFile = Mid(prj.Location,1,InStrRev(prj.Location,\"\\\")) & prj.Name & \".log\"" + "\r\n"
+            +"Dim objFSO, objFile, objFile2" + "\r\n"
+            +"Set objFSO = CreateObject(\"Scripting.FileSystemObject\")" + "\r\n"
+            +"If Dir(logFile) <> \"\" Then" + "\r\n"
+            +"Set objFile2 = objFSO.OpenTextFile(logFile,ForWriting)" + "\r\n"
+            +"Else" + "\r\n"
+            +"Set objFile = objFSO.CreateTextFile(logFile,True)" + "\r\n"
+            +"objFile.Close" + "\r\n"
+            +"Set objFile2 = objFSO.OpenTextFile(logFile,ForWriting)" + "\r\n"
+            +"End If" + "\r\n"
+            +"Dim prjName As String" + "\r\n"
+            +"prjName = prj.Name" + "\r\n"
+            +"If (InStr(prj.Name,\"ECI_10\") > 0) Then" + "\r\n"
+            +"ECI_th(prj,objFile2)" + "\r\n"
+            +"ElseIf (InStr(prj.Name,\"ECI\") > 0) Then" + "\r\n"
+            +"ECI(prj,objFile2)" + "\r\n"
+            +"ElseIf (InStr(prj.Name,\"AAC\") > 0) Then" + "\r\n"
+            +"AAC(prj,objFile2)" + "\r\n"
+            +"ElseIf (InStr(prj.Name,\"TOIN\") > 0) Then" + "\r\n"
+            +"TOIN(prj,objFile2)" + "\r\n"
+            +"ElseIf (InStr(prj.Name,\"LIOX_10\") > 0) Then" + "\r\n"
+            +"LIOX_Self(prj,objFile2)" + "\r\n"
+            +"ElseIf (InStr(prj.Name,\"LIOX\") > 0) Then" + "\r\n"
+            +"LIOX_main(prj,objFile2)" + "\r\n"
+            +"End If" + "\r\n"
+            +"objFile2.Close" + "\r\n"
+            +"End Sub" + "\r\n"
+            +"Function ECI_th(prj,objFile2)" + "\r\n"
+            +"Dim Lang As String" + "\r\n"
+            +"Dim trn As PslTransList" + "\r\n"
+            +"Dim i,j,h As Integer" + "\r\n"
+            +"Dim LangNum As Integer" + "\r\n"
+            +"Dim logoutput As String" + "\r\n"
+            +"logoutput = \"Begin to process file \" & prj.Name" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"'Remove the language sets" + "\r\n"
+            +"'The pointer of each string list of each language" + "\r\n"
+            +"'It goes thought only one string list" + "\r\n"
+            +"i = 0" + "\r\n"
+            +"h = 0" + "\r\n"  
+            +"'The pointer of language" + "\r\n"
+            +"j = 1" + "\r\n"
+            +"LangNum = prj.Languages.Count" + "\r\n"
+            +"For Each trn In prj.TransLists" + "\r\n"
+            +"i = i + 1" + "\r\n"
+            +"If ( i > LangNum) Then" + "\r\n"
+            +"Exit For" + "\r\n"
+            +"End If" + "\r\n"
+            +"Lang = trn.Language.LangCode" + "\r\n"
+            +"If (StrComp(Lang,\"tha\") = 0 ) Then" + "\r\n"
+            +"j = j + 1" + "\r\n"
+            +"h = h + 1" + "\r\n"
+            +"Else" + "\r\n"
+            +"logoutput = \"Removing language: \" & Lang" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"prj.Languages.Remove(j)" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next trn" + "\r\n"
+            +"'Delete those source lists that are all translated and validated" + "\r\n"
+            +"Dim delete As Boolean" + "\r\n"
+            +"delete = True" + "\r\n"
+            +"j = 0" + "\r\n"
+            +"i = 1" + "\r\n"
+            +"For Each trn In prj.TransLists" + "\r\n"
+            +"j = j + 1" + "\r\n"
+            +"If(j > h) Then" + "\r\n"
+            +"j = 1" + "\r\n"
+            +"i = i + 1" + "\r\n"
+            +"End If" + "\r\n"
+            +"Dim k As Integer" + "\r\n"
+            +"If (trn.TransRate <> 100) Then" + "\r\n"
+            +"delete = False" + "\r\n"  
+            +"For k = 1 To trn.StringCount" + "\r\n"
+            +"On Error Resume Next" + "\r\n"    
+            +"Dim tString As PslTransString" + "\r\n"
+            +"Set tString = trn.String(k)" + "\r\n"
+            +"If StrComp(tString.SourceText,tString.Text) <> 0 And tString.State(pslStateTranslated) = False And tString.State(pslStateReadOnly) = False Then" + "\r\n"
+            +"logoutput = \"Find one source and translation are not identical in untranslated state. Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"PSL.Output(logoutput)" + "\r\n"
+            +"tString.Text = tString.SourceText" + "\r\n"
+            +"End If" + "\r\n"
+            +"If tString.State(pslStateTranslated) = True And tString.State(pslStateReadOnly) = False And tString.State(pslStateReview) = True And tString.State(pslStateAutoTranslated) = True Then" + "\r\n"             
++"If tString.State(pslStateLocked) = True Then" + "\r\n"
++"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"Else" + "\r\n"
++"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"End If" + "\r\n"
+            +"End If" + "\r\n"                 
+            +"Next k" + "\r\n"
+            +"trn.Save" + "\r\n" 
+            +"Else" + "\r\n"      
+            +"For k = 1 To trn.StringCount" + "\r\n"
+            +"On Error Resume Next" + "\r\n"    
+            +"Dim tString1 As PslTransString" + "\r\n"
+            +"Set tString1 = trn.String(k)" + "\r\n"
+            +"If tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = False Then" +"\r\n"
+            +"delete = False" +"\r\n"
+            +"ElseIf tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = True Then" +"\r\n"
++"If tString1.State(pslStateLocked) = True Then" + "\r\n"
++"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"Else" + "\r\n"
++"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"End If" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next k" + "\r\n"    
+            +"End If" + "\r\n"
+            +"If (delete = True) And (j = h) Then" + "\r\n"
+            +"prj.SourceLists.Remove(i)" + "\r\n"
+            +"i = i - 1" + "\r\n"
+            +"ElseIf (j = h) Then" + "\r\n"
+            +"delete = True" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next trn" + "\r\n"
+            +"If prj.Languages.Count = 0 Or prj.SourceLists.Count = 0 Then" + "\r\n"
+            +"Dim deleteFile As String" + "\r\n"
+            +"deleteFile = prj.Location & \"\\\" + prj.Name & \".lpu\"" + "\r\n"
+            +"prj.Close()" + "\r\n"
+            +"Dim FileSys" + "\r\n"
+            +"Set FileSys = CreateObject(\"Scripting.FileSystemObject\")" + "\r\n"
+            +"FileSys.DeleteFile(deleteFile)" + "\r\n"
+            +"End If" + "\r\n"
+            +"End Function" + "\r\n"
+            +"Function ECI(prj,objFile2)" + "\r\n"
+            +"Dim Lang As String" + "\r\n"
+            +"Dim trn As PslTransList" + "\r\n"
+            +"Dim i,j,h As Integer" + "\r\n"
+            +"Dim LangNum As Integer" + "\r\n"
+            +"Dim logoutput As String" + "\r\n"
+            +"logoutput = \"Begin to process file \" & prj.Name" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"'Remove the language sets" + "\r\n"
+            +"'The pointer of each string list of each language" + "\r\n"
+            +"'It goes thought only one string list" + "\r\n"
+            +"i = 0" + "\r\n"
+            +"h = 0" + "\r\n"    
+            +"'The pointer of language" + "\r\n"
+            +"j = 1" + "\r\n"
+            +"LangNum = prj.Languages.Count" + "\r\n"
+            +"For Each trn In prj.TransLists" + "\r\n"
+            +"i = i + 1" + "\r\n"
+            +"If ( i > LangNum) Then" + "\r\n"
+            +"Exit For" + "\r\n"
+            +"End If" + "\r\n"
+            +"Lang = trn.Language.LangCode" + "\r\n"
+            +"If ((StrComp(Lang,\"chs\") = 0) Or (StrComp(Lang,\"vit\") = 0) Or (StrComp(Lang, \"cht\") = 0) ) Then" + "\r\n"
+            +"j = j + 1" + "\r\n"
+            +"h = h + 1" + "\r\n"
+            +"Else" + "\r\n"
+            +"logoutput = \"Removing language \" & Lang" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"prj.Languages.Remove(j)" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next trn" + "\r\n"
+            +"'Delete those source lists that are all translated and validated" + "\r\n"
+            +"Dim delete As Boolean" + "\r\n"
+            +"delete = True" + "\r\n"
+            +"'The pointer of each string list of each language" + "\r\n"
+            +"j = 0" + "\r\n"
+            +"'The pointer of each string list" + "\r\n"
+            +"i = 1" + "\r\n"
+            +"For Each trn In prj.TransLists" + "\r\n"
+            +"j = j + 1" + "\r\n"
+            +"If(j > h) Then" + "\r\n"
+            +"j = 1" + "\r\n"
+            +"i = i + 1" + "\r\n"
+            +"End If" + "\r\n"
+            +"Dim k As Integer" + "\r\n"
+            +"If (trn.TransRate <> 100) Then" + "\r\n"
+            +"delete = False" + "\r\n" 
+            +"For k = 1 To trn.StringCount" + "\r\n"
+            +"On Error Resume Next" + "\r\n"    
+            +"Dim tString As PslTransString" + "\r\n"
+            +"Set tString = trn.String(k)" + "\r\n"
+            +"If StrComp(tString.SourceText,tString.Text) <> 0 And tString.State(pslStateTranslated) = False And tString.State(pslStateReadOnly) = False Then" + "\r\n"
+            +"logoutput = \"Find one source and translation are not identical in untranslated state. Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"PSL.Output(logoutput)" + "\r\n"
+            +"tString.Text = tString.SourceText" + "\r\n"
+            +"End If" + "\r\n"
+            +"If tString.State(pslStateTranslated) = True And tString.State(pslStateReadOnly) = False And tString.State(pslStateReview) = True And tString.State(pslStateAutoTranslated) = True Then" + "\r\n" 
++"If tString.State(pslStateLocked) = True Then" + "\r\n"
++"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"Else" + "\r\n"
++"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"End If" + "\r\n" 
+            +"End If" + "\r\n"     
+            +"Next k" + "\r\n"
+            +"trn.Save" + "\r\n"
+            +"Else" + "\r\n"   
+            +"For k = 1 To trn.StringCount" + "\r\n"
+            +"On Error Resume Next" + "\r\n"    
+            +"Dim tString1 As PslTransString" + "\r\n"
+            +"Set tString1 = trn.String(k)" + "\r\n"
+            +"If tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = False Then" +"\r\n"
+            +"delete = False" +"\r\n"
+            +"ElseIf tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = True Then" +"\r\n"
++"If tString1.State(pslStateLocked) = True Then" + "\r\n"
++"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"Else" + "\r\n"
++"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"End If" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next k" + "\r\n"
+            +"End If" + "\r\n"
+            +"If (delete = True) And (j = h) Then" + "\r\n"
+            +"prj.SourceLists.Remove(i)" + "\r\n"
+            +"i = i - 1" + "\r\n"
+            +"ElseIf (j = h) Then" + "\r\n"
+            +"delete = True" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next trn" + "\r\n"
+            +"If prj.Languages.Count = 0 Or prj.SourceLists.Count = 0 Then" + "\r\n"
+            +"Dim deleteFile As String" + "\r\n"
+            +"deleteFile = prj.Location & \"\\\" + prj.Name & \".lpu\"" + "\r\n"
+            +"prj.Close()" + "\r\n"
+            +"Dim FileSys" + "\r\n"
+            +"Set FileSys = CreateObject(\"Scripting.FileSystemObject\")" + "\r\n"
+            +"FileSys.DeleteFile(deleteFile)" + "\r\n"
+            +"End If" + "\r\n"
+            +"End Function" + "\r\n"
+            +"Function AAC(prj,objFile2)" + "\r\n"
+            +"Dim Lang As String" + "\r\n"
+            +"Dim trn As PslTransList" + "\r\n"
+            +"Dim i,j,h As Integer" + "\r\n"
+            +"Dim LangNum As Integer" + "\r\n"
+            +"Dim logoutput As String" + "\r\n"
+            +"logoutput = \"Begin to process file \" & prj.Name" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"'Remove the language sets" + "\r\n"
+            +"'The pointer of each string list of each language" + "\r\n"
+            +"'It goes thought only one string list" + "\r\n"
+            +"i = 0" + "\r\n"
+            +"h = 0" + "\r\n"    
+            +"'The pointer of language" + "\r\n"
+            +"j = 1" + "\r\n"
+            +"LangNum = prj.Languages.Count" + "\r\n"
+            +"For Each trn In prj.TransLists" + "\r\n"
+            +"i = i + 1" + "\r\n"
+            +"If ( i > LangNum) Then" + "\r\n"
+            +"Exit For" + "\r\n"
+            +"End If" + "\r\n"
+            +"Lang = trn.Language.LangCode" + "\r\n"
+            +"If ((StrComp(Lang,\"sve\") = 0) Or (StrComp(Lang,\"fin\") = 0) Or (StrComp(Lang, \"dan\") = 0) Or (StrComp(Lang,\"nor\") = 0) Or (StrComp(Lang,\"plk\") = 0) Or (StrComp(Lang,\"nld\") = 0)) Then" + "\r\n"
+            +"j = j + 1" + "\r\n"
+            +"h = h + 1" + "\r\n"    
+            +"Else" + "\r\n"
+            +"prj.Languages.Remove(j)" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next trn" + "\r\n"
+            +"'Delete those source lists that are all translated and validated" + "\r\n"
+            +"Dim delete As Boolean" + "\r\n"
+            +"delete = True" + "\r\n"
+            +"'The pointer of each string list of each language" + "\r\n"
+            +"j = 0" + "\r\n"
+            +"'The pointer of each string list" + "\r\n"
+            +"i = 1" + "\r\n"
+            +"For Each trn In prj.TransLists" + "\r\n"
+            +"j = j + 1" + "\r\n"
+            +"If(j > h) Then" + "\r\n"
+            +"j = 1" + "\r\n"
+            +"i = i + 1" + "\r\n"
+            +"End If" + "\r\n"
+            +"Dim k As Integer" + "\r\n"
+            +"If (trn.TransRate <> 100) Then" + "\r\n"
+            +"delete = False" + "\r\n" 
+            +"For k = 1 To trn.StringCount" + "\r\n"
+            +"On Error Resume Next" + "\r\n"    
+            +"Dim tString As PslTransString" + "\r\n"
+            +"Set tString = trn.String(k)" + "\r\n"
+            +"If StrComp(tString.SourceText,tString.Text) <> 0 And tString.State(pslStateTranslated) = False And tString.State(pslStateReadOnly) = False Then" + "\r\n"
+            +"logoutput = \"Find one source and translation are not identical in untranslated state. Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"PSL.Output(logoutput)" + "\r\n"    
+            +"tString.Text = tString.SourceText" + "\r\n"
+            +"End If" + "\r\n"
+            +"If tString.State(pslStateTranslated) = True And tString.State(pslStateReadOnly) = False And tString.State(pslStateReview) = True And tString.State(pslStateAutoTranslated) = True Then" + "\r\n"    
++"If tString.State(pslStateLocked) = True Then" + "\r\n"
++"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"Else" + "\r\n"
++"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"End If" + "\r\n"
+            +"End If" + "\r\n"     
+            +"Next k" + "\r\n"
+            +"trn.Save" + "\r\n"
+            +"Else" + "\r\n"   
+            +"For k = 1 To trn.StringCount" + "\r\n"
+            +"On Error Resume Next" + "\r\n"    
+            +"Dim tString1 As PslTransString" + "\r\n"
+            +"Set tString1 = trn.String(k)" + "\r\n"
+            +"If tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = False Then" +"\r\n"
+            +"delete = False" +"\r\n"
+            +"ElseIf tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = True Then" +"\r\n"
++"If tString1.State(pslStateLocked) = True Then" + "\r\n"
++"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"Else" + "\r\n"
++"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"End If" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next k" + "\r\n"    
+            +"End If" + "\r\n"
+            +"If (delete = True) And (j = h) Then" + "\r\n"
+            +"prj.SourceLists.Remove(i)" + "\r\n"
+            +"i = i - 1" + "\r\n"
+            +"ElseIf (j = h) Then" + "\r\n"
+            +"delete = True" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next trn" + "\r\n"
+            +"If prj.Languages.Count = 0 Or prj.SourceLists.Count = 0 Then" + "\r\n"
+            +"Dim deleteFile As String" + "\r\n"
+            +"deleteFile = prj.Location & \"\\\" + prj.Name & \".lpu\"" + "\r\n"
+            +"prj.Close()" + "\r\n"
+            +"Dim FileSys" + "\r\n"
+            +"Set FileSys = CreateObject(\"Scripting.FileSystemObject\")" + "\r\n"
+            +"FileSys.DeleteFile(deleteFile)" + "\r\n"
+            +"End If" + "\r\n"
+            +"End Function" + "\r\n"
+            +"Function TOIN(prj,objFile2)" + "\r\n"
+            +"Dim Lang As String" + "\r\n"
+            +"Dim trn As PslTransList" + "\r\n"
+            +"Dim i,j,h As Integer" + "\r\n"
+            +"Dim LangNum As Integer" + "\r\n"
+            +"Dim logoutput As String" + "\r\n"
+            +"logoutput = \"Begin to process file \" & prj.Name" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"i = 0" + "\r\n"
+            +"h = 0" + "\r\n"
+            +"j = 1" + "\r\n"
+            +"LangNum = prj.Languages.Count" + "\r\n"
+            +"For Each trn In prj.TransLists" + "\r\n"
+            +"i = i + 1" + "\r\n"
+            +"If ( i > LangNum) Then" + "\r\n"
+            +"Exit For" + "\r\n"
+            +"End If" + "\r\n"
+            +"Lang = trn.Language.LangCode" + "\r\n"
+            +"If ((StrComp(Lang,\"jpn\") = 0) Or (StrComp(Lang,\"kor\") = 0)) Then" + "\r\n"
+            +"j = j + 1" + "\r\n"
+            +"h = h + 1" + "\r\n"
+            +"Else" + "\r\n"
+            +"prj.Languages.Remove(j)" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next trn" + "\r\n"
+            +"'Delete those source lists that are all translated and validated" + "\r\n"
+            +"Dim delete As Boolean" + "\r\n"
+            +"delete = True" + "\r\n"
+            +"'The pointer of each string list of each language" + "\r\n"
+            +"j = 0" + "\r\n"
+            +"'The pointer of each string list" + "\r\n"
+            +"i = 1" + "\r\n"
+            +"For Each trn In prj.TransLists" + "\r\n"
+            +"j = j + 1" + "\r\n"
+            +"If(j > h) Then" + "\r\n"
+            +"j = 1" + "\r\n"
+            +"i = i + 1" + "\r\n"
+            +"End If" + "\r\n"
+            +"Dim k As Integer" + "\r\n"
+            +"If (trn.TransRate <> 100) Then" + "\r\n"
+            +"delete = False" + "\r\n" 
+            +"For k = 1 To trn.StringCount" + "\r\n"
+            +"On Error Resume Next" + "\r\n"    
+            +"Dim tString As PslTransString" + "\r\n"
+            +"Set tString = trn.String(k)" + "\r\n"
+            +"If StrComp(tString.SourceText,tString.Text) <> 0 And tString.State(pslStateTranslated) = False And tString.State(pslStateReadOnly) = False Then" + "\r\n"
+            +"logoutput = \"Find one source and translation are not identical in untranslated state. Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"PSL.Output(logoutput)" + "\r\n"    
+            +"tString.Text = tString.SourceText" + "\r\n"
+            +"End If" + "\r\n"
+            +"If tString.State(pslStateTranslated) = True And tString.State(pslStateReadOnly) = False And tString.State(pslStateReview) = True And tString.State(pslStateAutoTranslated) = True Then" + "\r\n" 
++"If tString.State(pslStateLocked) = True Then" + "\r\n"
++"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"Else" + "\r\n"
++"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"End If" + "\r\n"
+            +"End If" + "\r\n"                 
+            +"Next k" + "\r\n"
+            +"trn.Save" + "\r\n" 
+            +"Else" + "\r\n"   
+            +"For k = 1 To trn.StringCount" + "\r\n"
+            +"On Error Resume Next" + "\r\n"    
+            +"Dim tString1 As PslTransString" + "\r\n"
+            +"Set tString1 = trn.String(k)" + "\r\n"
+            +"If tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = False Then" +"\r\n"
+            +"delete = False" +"\r\n"
+            +"ElseIf tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = True Then" +"\r\n"
++"If tString1.State(pslStateLocked) = True Then" + "\r\n"
++"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"Else" + "\r\n"
++"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"End If" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next k" + "\r\n"    
+            +"End If" + "\r\n"
+            +"If (delete = True) And (j = h) Then" + "\r\n"
+            +"prj.SourceLists.Remove(i)" + "\r\n"
+            +"i = i - 1" + "\r\n"
+            +"ElseIf (j = h) Then" + "\r\n"
+            +"delete = True" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next trn" + "\r\n"
+            +"If prj.Languages.Count = 0 Or prj.SourceLists.Count = 0 Then" + "\r\n"
+            +"Dim deleteFile As String" + "\r\n"
+            +"deleteFile = prj.Location & \"\\\" + prj.Name & \".lpu\"" + "\r\n"
+            +"prj.Close()" + "\r\n"
+            +"Dim FileSys" + "\r\n"
+            +"Set FileSys = CreateObject(\"Scripting.FileSystemObject\")" + "\r\n"
+            +"FileSys.DeleteFile(deleteFile)" + "\r\n"
+            +"End If" + "\r\n"
+            +"End Function" + "\r\n"
+            +"Function LIOX_Self(prj,objFile2)" + "\r\n"
+            +"Dim Lang As String" + "\r\n"
+            +"Dim trn As PslTransList" + "\r\n"
+            +"Dim i,j,h As Integer" + "\r\n"
+            +"Dim LangNum As Integer" + "\r\n"
+            +"Dim logoutput As String" + "\r\n"
+            +"logoutput = \"Begin to process file \" & prj.Name" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"i = 0" + "\r\n"
+            +"j = 1" + "\r\n"
+            +"h = 0" + "\r\n"
+            +"LangNum = prj.Languages.Count" + "\r\n"
+            +"For Each trn In prj.TransLists" + "\r\n"
+            +"i = i + 1" + "\r\n"
+            +"If ( i > LangNum) Then" + "\r\n"
+            +"Exit For" + "\r\n"
+            +"End If" + "\r\n"
+            +"Lang = trn.Language.LangCode" + "\r\n"
+            +"If ((StrComp(Lang,\"eti\") = 0) Or (StrComp(Lang,\"lth\") = 0) Or (StrComp(Lang, \"lvi\") = 0) Or (StrComp(Lang, \"ptg\") = 0) ) Then" + "\r\n"
+            +"j = j + 1" + "\r\n"
+            +"h = h + 1" + "\r\n"
+            +"Else" + "\r\n"
+            +"prj.Languages.Remove(j)" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next trn" + "\r\n"
+            +"'Delete those source lists that are all translated and validated" + "\r\n"
+            +"Dim delete As Boolean" + "\r\n"
+            +"delete = True" + "\r\n"
+            +"j = 0" + "\r\n"
+            +"i = 1" + "\r\n"
+            +"For Each trn In prj.TransLists" + "\r\n"
+            +"j = j + 1" + "\r\n"
+            +"If(j > h) Then" + "\r\n"
+            +"j = 1" + "\r\n"
+            +"i = i + 1" + "\r\n"
+            +"End If" + "\r\n"
+            +"Dim k As Integer" + "\r\n"    
+            +"If (trn.TransRate <> 100) Then" + "\r\n"
+            +"delete = False" + "\r\n"  
+            +"For k = 1 To trn.StringCount" + "\r\n"
+            +"On Error Resume Next" + "\r\n"    
+            +"Dim tString As PslTransString" + "\r\n"
+            +"Set tString = trn.String(k)" + "\r\n"
+            +"If StrComp(tString.SourceText,tString.Text) <> 0 And tString.State(pslStateTranslated) = False And tString.State(pslStateReadOnly) = False Then" + "\r\n"
+            +"logoutput = \"Find one source and translation are not identical in untranslated state. Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"PSL.Output(logoutput)" + "\r\n"    
+            +"tString.Text = tString.SourceText" + "\r\n"
+            +"End If" + "\r\n"
+            +"If tString.State(pslStateTranslated) = True And tString.State(pslStateReadOnly) = False And tString.State(pslStateReview) = True And tString.State(pslStateAutoTranslated) = True Then" + "\r\n"  
++"If tString.State(pslStateLocked) = True Then" + "\r\n"
++"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"Else" + "\r\n"
++"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"End If" + "\r\n"  
+            +"End If" + "\r\n"                 
+            +"Next k" + "\r\n"
+            +"trn.Save" + "\r\n"
+            +"Else" + "\r\n"   
+            +"For k = 1 To trn.StringCount" + "\r\n"
+            +"On Error Resume Next" + "\r\n"    
+            +"Dim tString1 As PslTransString" + "\r\n"
+            +"Set tString1 = trn.String(k)" + "\r\n"
+            +"If tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = False Then" +"\r\n"
+            +"delete = False" +"\r\n"
+            +"ElseIf tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = True Then" +"\r\n"
++"If tString1.State(pslStateLocked) = True Then" + "\r\n"
++"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"Else" + "\r\n"
++"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"End If" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next k" + "\r\n"    
+            +"End If" + "\r\n"
+            +"If (delete = True) And (j = h) Then" + "\r\n"
+            +"prj.SourceLists.Remove(i)" + "\r\n"
+            +"i = i - 1" + "\r\n"
+            +"ElseIf (j = h) Then" + "\r\n"
+            +"delete = True" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next trn" + "\r\n"
+            +"If prj.Languages.Count = 0 Or prj.SourceLists.Count = 0 Then" + "\r\n"
+            +"Dim deleteFile As String" + "\r\n"
+            +"deleteFile = prj.Location & \"\\\" + prj.Name & \".lpu\"" + "\r\n"
+            +"prj.Close()" + "\r\n"
+            +"Dim FileSys" + "\r\n"
+            +"Set FileSys = CreateObject(\"Scripting.FileSystemObject\")" + "\r\n"
+            +"FileSys.DeleteFile(deleteFile)" + "\r\n"
+            +"End If" + "\r\n"
+            +"End Function" + "\r\n"
+            +"Function LIOX_main(prj,objFile2)" + "\r\n"
+            +"Dim Lang As String" + "\r\n"
+            +"Dim trn As PslTransList" + "\r\n"
+            +"Dim i,j,h As Integer" + "\r\n"
+            +"Dim LangNum As Integer" + "\r\n"
+            +"Dim logoutput As String" + "\r\n"
+            +"logoutput = \"Begin to process file \" & prj.Name" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"i = 0" + "\r\n"
+            +"j = 1" + "\r\n"
+            +"h = 0" + "\r\n"
+            +"LangNum = prj.Languages.Count" + "\r\n"
+            +"For Each trn In prj.TransLists" + "\r\n"
+            +"i = i + 1" + "\r\n"
+            +"If ( i > LangNum) Then" + "\r\n"
+            +"Exit For" + "\r\n"
+            +"End If" + "\r\n"
+            +"Lang = trn.Language.LangCode" + "\r\n"
+            +"If ((StrComp(Lang,\"ita\") = 0) Or (StrComp(Lang,\"ptb\") = 0) Or (StrComp(Lang, \"rom\") = 0) Or (StrComp(Lang,\"ara\") = 0) Or (StrComp(Lang,\"csy\") = 0) Or (StrComp(Lang, \"deu\") = 0) Or (StrComp(Lang,\"fra\") = 0) Or (StrComp(Lang,\"heb\") = 0) Or (StrComp(Lang, \"rus\") = 0) Or (StrComp(Lang,\"trk\") = 0) Or (StrComp(Lang,\"ell\") = 0) Or (StrComp(Lang, \"esp\") = 0)) Then" + "\r\n"
+            +"j = j + 1" + "\r\n"
+            +"h = h + 1" + "\r\n"    
+            +"Else" + "\r\n"
+            +"prj.Languages.Remove(j)" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next trn" + "\r\n"
+            +"'Delete those source lists that are all translated and validated" + "\r\n"
+            +"Dim delete As Boolean" + "\r\n"
+            +"delete = True" + "\r\n"
+            +"j = 0" + "\r\n"
+            +"i = 1" + "\r\n"
+            +"For Each trn In prj.TransLists" + "\r\n"
+            +"j = j + 1" + "\r\n"
+            +"If(j > h) Then" + "\r\n"
+            +"j = 1" + "\r\n"
+            +"i = i + 1" + "\r\n"
+            +"End If" + "\r\n"
+            +"Dim k As Integer" + "\r\n" 
+            +"If (trn.TransRate <> 100) Then" + "\r\n"
+            +"delete = False" + "\r\n"  
+            +"For k = 1 To trn.StringCount" + "\r\n"
+            +"On Error Resume Next" + "\r\n"    
+            +"Dim tString As PslTransString" + "\r\n"
+            +"Set tString = trn.String(k)" + "\r\n"
+            +"If StrComp(tString.SourceText,tString.Text) <> 0 And tString.State(pslStateTranslated) = False And tString.State(pslStateReadOnly) = False Then" + "\r\n"
+            +"logoutput = \"Find one source and translation are not identical in untranslated state. Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
+            +"objFile2.writeLine(logoutput)" + "\r\n"
+            +"PSL.Output(logoutput)" + "\r\n"    
+            +"tString.Text = tString.SourceText" + "\r\n"
+            +"End If" + "\r\n"
+            +"If tString.State(pslStateTranslated) = True And tString.State(pslStateReadOnly) = False And tString.State(pslStateReview) = True And tString.State(pslStateAutoTranslated) = True Then" + "\r\n" 
++"If tString.State(pslStateLocked) = True Then" + "\r\n"
++"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"Else" + "\r\n"
++"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"End If" + "\r\n"
+            +"End If" + "\r\n"                 
+            +"Next k" + "\r\n"
+            +"trn.Save" + "\r\n"
+            +"Else" + "\r\n"
+            +"For k = 1 To trn.StringCount" + "\r\n"
+            +"On Error Resume Next" + "\r\n"    
+            +"Dim tString1 As PslTransString" + "\r\n"
+            +"Set tString1 = trn.String(k)" + "\r\n"
+            +"If tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = False Then" +"\r\n"
+            +"delete = False" +"\r\n"
+            +"ElseIf tString1.State(pslStateTranslated) = True And tString1.State(pslStateReadOnly) = False And tString1.State(pslStateReview) = True And tString1.State(pslStateAutoTranslated) = True Then" +"\r\n"
++"If tString1.State(pslStateLocked) = True Then" + "\r\n"
++"logoutput = \"Find one green locked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"Else" + "\r\n"
++"logoutput = \"Find one green unlocked string in Language: \" & trn.Language.LangCode & \" Number: \" & tString.Number & \" in Stringlist: \" & trn.Title" + "\r\n"
++"objFile2.writeLine(logoutput)" + "\r\n"
++"PSL.Output(logoutput)" + "\r\n"
++"End If" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next k" + "\r\n"    
+            +"End If" + "\r\n"
+            +"If (delete = True) And (j = h) Then" + "\r\n"
+            +"prj.SourceLists.Remove(i)" + "\r\n"
+            +"i = i - 1" + "\r\n"
+            +"ElseIf (j = h) Then" + "\r\n"
+            +"delete = True" + "\r\n"
+            +"End If" + "\r\n"
+            +"Next trn" + "\r\n"
+            +"If prj.Languages.Count = 0 Or prj.SourceLists.Count = 0 Then" + "\r\n"
+            +"Dim deleteFile As String" + "\r\n"
+            +"deleteFile = prj.Location & \"\\\" + prj.Name & \".lpu\"" + "\r\n"
+            +"prj.Close()" + "\r\n"
+            +"Dim FileSys" + "\r\n"
+            +"Set FileSys = CreateObject(\"Scripting.FileSystemObject\")" + "\r\n"
+            +"FileSys.DeleteFile(deleteFile)" + "\r\n"
+            +"End If" + "\r\n"
+            +"End Function" + "\r\n";
+        
+        File file = new File(MacroFolder + "\\PslLpuSplitter_v3.bas");
+        
+	// if file doesnt exists, then create it
+	if (!file.exists()) {
+            file.createNewFile();
+	}
 
+	FileWriter fw = new FileWriter(file.getAbsoluteFile());
+	BufferedWriter bw = new BufferedWriter(fw);
+	bw.write(content);
+	bw.close();
+    }
+    
+    
     /**
      * @param args the command line arguments
      */
@@ -259,10 +1537,10 @@ public class SplitterUI extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(SplitterUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
+        //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
             public void run() {
                 new SplitterUI().setVisible(true);
             }
@@ -270,8 +1548,11 @@ public class SplitterUI extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox CheckBox1;
     private javax.swing.JLabel Note;
+    private javax.swing.JLabel Note1;
     private javax.swing.JLabel Select;
+    private javax.swing.JLabel ToolLabel;
     private javax.swing.JButton browse;
     private javax.swing.JTextField filepath;
     private javax.swing.JButton log;
